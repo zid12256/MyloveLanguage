@@ -7,9 +7,10 @@
 }
 
 body {
-  height: 100vh;
-  /* Utilisation de ton image sky2.jpg comme fond principal */
+  min-height: 100vh;
+  /* Utilisation de l'image sky2.jpg comme fond principal */
   background: url('sky2.jpg') center/cover no-repeat;
+  position: relative; /* nécessaire pour que body::before couvre correctement */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,18 +29,6 @@ body::before {
   z-index: 0;
 }
  
-.flower-icon {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover; /* يضمن جودة الصورة وعدم تمددها */
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  margin-bottom: 20px;
-  /* تأثير التوهج الضوئي */
-  box-shadow: 0 0 20px rgba(168, 216, 255, 0.8), 0 0 40px rgba(168, 216, 255, 0.4);
-  animation: float 3s ease-in-out infinite, glow 3s ease-in-out infinite;
-  z-index: 2;
-}
 
 /* إضافة أنيميشن للتوهج المتغير */
 @keyframes glow {
@@ -51,6 +40,10 @@ body::before {
   z-index: 1;
   width: 90%;
   max-width: 450px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* assure le centrage vertical sur toutes les pages */
 }
 
 .card {
@@ -61,19 +54,37 @@ body::before {
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  margin: auto; /* centrage de secours */
 }
 
-/* Style pour la fleur en petite décoration */
+/* Style pour la fleur en petite décoration (fusionné) */
 .flower-icon {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  object-fit: cover;
+  object-fit: cover; /* يضمن جودة الصورة وعدم تمددها */
   border: 2px solid #a8d8ff;
   margin-bottom: 20px;
-  animation: float 3s ease-in-out infinite;
+  /* تأثير التوهج الضوئي */
+  box-shadow: 0 0 20px rgba(168, 216, 255, 0.8), 0 0 40px rgba(168, 216, 255, 0.4);
+  animation: float 3s ease-in-out infinite, glow 3s ease-in-out infinite;
+  z-index: 2;
+}
+.love-timer {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(168, 216, 255, 0.2);
 }
 
+#timer {
+  font-family: 'Cairo', sans-serif;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #a8d8ff;
+  text-shadow: 0 0 10px rgba(168, 216, 255, 0.5);
+}
 h1 {
   font-family: 'Amiri', serif;
   font-size: 2.2rem;
@@ -105,7 +116,40 @@ p {
   transition: all 0.4s ease;
   display: block;
 }
+/* حاوية الشهب لتغطية الخلفية بالكامل */
+.star-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
 
+/* تصميم الشهاب الواحد */
+.shooting-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 2px;
+  background: linear-gradient(-45deg, #a8d8ff, rgba(0, 0, 255, 0));
+  filter: drop-shadow(0 0 6px #a8d8ff);
+  animation: tail 3s ease-in-out infinite, shooting 3s ease-in-out infinite;
+}
+
+/* حركة ذيل الشهاب */
+@keyframes tail {
+  0% { width: 0; }
+  30% { width: 100px; }
+  100% { width: 0; }
+}
+
+/* حركة الشهاب من زاوية لأخرى */
+@keyframes shooting {
+  0% { transform: translateX(0) translateY(0) rotate(45deg); }
+  100% { transform: translateX(-500px) translateY(500px) rotate(45deg); }
+}
 .btn:hover {
   background: #a8d8ff;
   transform: translateY(-5px);
@@ -117,4 +161,31 @@ p {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
+}
+
+/* Style pour l'élément du poème (déplacé depuis le JS) */
+#randomPoem {
+  min-height: 80px; /* يحافظ على حجم البطاقة ثابتاً أثناء الكتابة */
+  font-family: 'Amiri', serif;
+  font-size: 1.4rem;
+  line-height: 1.8;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(168, 216, 255, 0.5);
+}
+
+/* Love timer: petit compteur en haut à gauche */
+.love-timer {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 3000;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.9rem; /* un peu plus petit */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  pointer-events: none; /* ne gêne pas les clics */
+  backdrop-filter: blur(4px);
 }

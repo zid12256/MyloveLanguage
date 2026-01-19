@@ -6,11 +6,12 @@
   <title>إلى حبيبتي 💙</title>
   <link rel="stylesheet" href="love.css" />
 </head>
-<body>
+<body data-page="main">
 
-<div class="container">
+<div class="star-container"></div>
+  <div class="container">
     <div class="card">
-        <img src="flower.jpg" alt="Flower" class="flower-icon">
+        <img src="lover.jpeg" alt="Flower" class="flower-icon">
         
         <h1>مرحبًا يا أميرتي 💙</h1>
         <p>كيف حال قلبكِ اليوم؟ اختاري لترفي عن نفسكِ 💫</p>
@@ -21,12 +22,15 @@
             <a href="page3.html" class="btn">أحتاج للأمل 🌟</a>
         </div>
     </div>
-</div>
+  </div>
+  <div class="love-timer">
+    <p>لقد مر على حبنا:</p>
+    <div id="timer">جاري الحساب...</div>
+  </div>
+  <audio id="bgMusic" loop>
+    <source src="Love.mp3" type="audio/mp3">
+  </audio>
+  <script src="love.js"></script>
 
-<audio id="bgMusic" loop>
-  <source src="Love.mp3" type="audio/mp3">
-</audio>
-
-<script src="love.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Déclaration de la variable audio (sera initialisée dans window.onload)
+// Déclaration de la variable audio (initialisée au chargement)
 let music = null;
 
 const poems = {
@@ -99,42 +99,47 @@ const poems = {
   ]
 };
 
-// Single onload handler: initialise audio and choisir un poème en toute sécurité
+// Single onload handler: initialise audio, musique par page et afficher un poème
 window.addEventListener('load', () => {
   // initialiser la référence à l'audio (s'il existe)
   music = document.getElementById("bgMusic");
 
-  // choisir la musique de page si l'élément audio existe
   const pageKey = document.body.getAttribute("data-page") || "main";
+
+  // choisir la musique de page si l'élément audio existe
   if (music && pageMusic[pageKey]) {
     music.src = pageMusic[pageKey];
   } else if (!music) {
     console.warn('Element #bgMusic introuvable — la lecture audio est désactivée.');
   }
 
-  // sélection sûre du poème
+  // choisir un poème de manière sûre
   const poemElement = document.getElementById("randomPoem");
   if (poemElement) {
     const pagePoems = poems[pageKey];
     if (pagePoems && Array.isArray(pagePoems) && pagePoems.length > 0) {
       const randomIndex = Math.floor(Math.random() * pagePoems.length);
-      poemElement.innerText = pagePoems[randomIndex];
+      const selectedPoem = pagePoems[randomIndex];
+      // Effet de saisie si l'élément supporte l'opération
+      typeWriter(selectedPoem, poemElement, 60);
     } else {
-      console.warn(`Aucun poème trouvé pour data-page="${pageKey}"`);
       poemElement.innerText = "Bienvenue — aucun poème disponible pour cette page.";
     }
   }
 });
 
-// تأثير المفرقعات (Fireworks) عند الضغط
+// تأثير المفرقعات (Fireworks) عند الضغط — protège l'absence de document.body
 document.addEventListener('click', (e) => {
-  const particleCount = 12; // عدد الشرارات
-  const colors = ['#ff0000', '#00f2fe', '#fff', '#ff00d4', '#ffff00']; // ألوان المفرقعات
+  // si l'événement n'a pas de coordonnées (rare), on skip
+  if (!e || typeof e.clientX !== 'number') return;
+
+  const particleCount = 12;
+  const colors = ['#ff0000', '#00f2fe', '#ffffff', '#ff00d4', '#ffff00'];
 
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div');
     const color = colors[Math.floor(Math.random() * colors.length)];
-    
+
     particle.style.position = 'fixed';
     particle.style.left = e.clientX + 'px';
     particle.style.top = e.clientY + 'px';
@@ -145,11 +150,9 @@ document.addEventListener('click', (e) => {
     particle.style.pointerEvents = 'none';
     particle.style.boxShadow = `0 0 10px ${color}`;
     particle.style.zIndex = '1000';
-    
-    // حساب اتجاه عشوائي لكل شرارة
+
     const destinationX = (Math.random() - 0.5) * 300;
     const destinationY = (Math.random() - 0.5) * 300;
-    const rotation = Math.random() * 360;
 
     const animation = particle.animate([
       { transform: 'translate(0, 0) scale(1)', opacity: 1 },
@@ -167,9 +170,9 @@ document.addEventListener('click', (e) => {
 
 // مصفوفة الموسيقى لكل صفحة
 const pageMusic = {
-  page1: "love_music.mp3",
-  page2: "sad_music.mp3",
-  page3: "hope_music.mp3",
+  page1: "Abdulrahman Mohammed & Khalid Barzanji - Resemblance.mp3",
+  page2: "همت-عبدالرحمن محمد وخالد برزنجي_abdulrahman mohammed&khalid barzanji-adoration [7ho1WFn79e0].mp3",
+  page3: "Abdulrahman Mohammed & Mohab Omer - Craziness - أصابك عشق (1).mp3",
   main: "Love.mp3"
 };
 
@@ -177,7 +180,7 @@ const pageMusic = {
 function fadeInMusic(audioElement) {
   if (!audioElement) return;
   try {
-    audioElement.volume = 0; // البدء بصوت صامت
+    audioElement.volume = 0;
     const p = audioElement.play();
     if (p && typeof p.catch === 'function') p.catch(() => console.log('play() blocked, waiting for gesture'));
   } catch (e) {
@@ -186,7 +189,7 @@ function fadeInMusic(audioElement) {
 
   let vol = 0;
   const interval = setInterval(() => {
-    if (vol < 0.5) { // augmenter progressivement jusqu'à 50%
+    if (vol < 0.5) {
       vol = Math.min(0.5, vol + 0.05);
       audioElement.volume = vol;
     } else {
@@ -202,9 +205,150 @@ document.addEventListener("click", () => {
   }
 }, { once: false });
 
-// تشغيل الموسيقى بتأثير التلاشي عند أول ضغطة
-document.addEventListener("click", () => {
-  if (music.paused) {
-    fadeInMusic(music);
+// دالة تأثير الكتابة (Typing Effect) — prend l'élément DOM au lieu d'ID
+function typeWriter(text, element, speed) {
+  // Amélioration pour l'arabe : utiliser textContent avec slice
+  // et forcer la direction RTL + white-space pour préserver les espaces
+  if (!element || typeof text !== 'string') return;
+  element.dir = element.dir || 'rtl';
+  element.style.whiteSpace = 'pre-wrap';
+  element.textContent = '';
+  let i = 0;
+  function type() {
+    if (i <= text.length) {
+      // mettre tout le préfixe en une fois évite les problèmes de ligatures/combining
+      element.textContent = text.slice(0, i);
+      i++;
+      setTimeout(type, speed);
+    }
   }
-}, { once: false });
+  type();
+}
+// وظيفة إنشاء الشهب العشوائية
+function createShootingStar() {
+  const container = document.querySelector('.star-container');
+  if (!container) return;
+
+  const star = document.createElement('div');
+  star.className = 'shooting-star';
+  
+
+// ---------- Love timer (compteur) ----------
+// petit compteur qui s'incrémente depuis l'ouverture de la page
+function createLoveTimer() {
+  const timer = document.createElement('div');
+  timer.className = 'love-timer';
+  timer.id = 'loveTimer';
+  timer.textContent = '00:00';
+  document.body.appendChild(timer);
+
+  let seconds = 0;
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  // update every second
+  const intervalId = setInterval(() => {
+    seconds += 1;
+    timer.textContent = formatTime(seconds);
+  }, 1000);
+
+  // expose stop function in case on veut l'arrêter plus tard
+  return { timer, stop: () => clearInterval(intervalId) };
+}
+
+// créer le timer au chargement
+window.addEventListener('load', () => {
+  // si déjà présent (pages multiples), ne pas doubler
+  if (!document.getElementById('loveTimer')) {
+    createLoveTimer();
+  }
+});
+  // تحديد مكان البدء عشوائياً في النصف العلوي
+  star.style.top = Math.random() * 50 + '%';
+  star.style.left = Math.random() * 100 + '%';
+  
+  // مدة عشوائية للحركة
+  const duration = Math.random() * 3 + 2;
+  star.style.animationDuration = `${duration}s`;
+
+  container.appendChild(star);
+
+  // إزالة الشهاب بعد انتهاء الأنيميشن
+  setTimeout(() => {
+    star.remove();
+  }, duration * 1000);
+}
+
+// إطلاق شهاب جديد كل 4 ثوانٍ
+setInterval(createShootingStar, 2000);
+// تاريخ بداية علاقتكما (سنة، شهر -1، يوم، ساعة، دقيقة)
+// ملاحظة: الشهور تبدأ من 0 (يناير = 0، فبراير = 1...)
+// تاريخ البداية: 20 ديسمبر 2025
+const startDate = new Date(2025, 11, 20, 0, 0, 0);
+function updateTimer() {
+    const now = new Date();
+    const diff = now - startDate;
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const timerElement = document.getElementById("timer");
+    if (timerElement) {
+        timerElement.innerHTML = `${days} يوم و ${hours} ساعة و ${minutes} دقيقة و ${seconds} ثانية`;
+    }
+}
+
+// تحديث العداد كل ثانية
+setInterval(updateTimer, 1000);
+updateTimer(); // تشغيل فوري عند التحميل
+// تأثير المفرقعات الملونة حسب الصفحة
+document.addEventListener('click', (e) => {
+  const pageKey = document.body.getAttribute("data-page") || "main";
+  
+  // تحديد لوحة الألوان حسب الصفحة
+  const colorPalettes = {
+    page1: ['#a8d8ff', '#ffffff', '#00f2fe', '#4facfe'], // ألوان الحب (أزرق وسماوي)
+    page2: ['#ff9a9e', '#fad0c4', '#ffecd2', '#ffffff'], // ألوان الحنين (وردي ودافئ)
+    page3: ['#f6d365', '#fda085', '#fff', '#ffff00'],    // ألوان الأمل (ذهبي وأصفر)
+    main:  ['#ffffff', '#a8d8ff', '#00f2fe']             // الألوان الافتراضية
+  };
+
+  const currentPalette = colorPalettes[pageKey];
+  const particleCount = 15; // زيادة عدد الشرارات قليلاً
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    const color = currentPalette[Math.floor(Math.random() * currentPalette.length)];
+    
+    particle.style.position = 'fixed';
+    particle.style.left = e.clientX + 'px';
+    particle.style.top = e.clientY + 'px';
+    particle.style.width = '4px';
+    particle.style.height = '4px';
+    particle.style.backgroundColor = color;
+    particle.style.borderRadius = '50%';
+    particle.style.pointerEvents = 'none';
+    particle.style.boxShadow = `0 0 12px ${color}`; // زيادة التوهج
+    particle.style.zIndex = '1000';
+    
+    const destinationX = (Math.random() - 0.5) * 400;
+    const destinationY = (Math.random() - 0.5) * 400;
+
+    const animation = particle.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: `translate(${destinationX}px, ${destinationY}px) scale(0)`, opacity: 0 }
+    ], {
+      duration: 800 + Math.random() * 1000,
+      easing: 'cubic-bezier(0, .9, .57, 1)',
+      fill: 'forwards'
+    });
+
+    document.body.appendChild(particle);
+    animation.onfinish = () => particle.remove();
+  }
+});
