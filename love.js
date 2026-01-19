@@ -1,17 +1,5 @@
-const music = document.getElementById("bgMusic");
-
-// تشغيل الموسيقى عند التفاعل لضمان عملها في كل المتصفحات
-// Guarder l'appel à play() au cas où l'élément audio n'existe pas
-if (music) {
-  document.addEventListener("click", () => {
-    const p = music.play();
-    if (p && typeof p.catch === 'function') {
-      p.catch(() => console.log("Audio waiting..."));
-    }
-  });
-} else {
-  console.log('Element #bgMusic introuvable — lecture audio désactivée.');
-}
+// Déclaration de la variable audio (sera initialisée dans window.onload)
+let music = null;
 
 const poems = {
   page1: [ // أشعر بالحب 💙 (35+ قصيدة)
@@ -111,15 +99,32 @@ const poems = {
   ]
 };
 
-window.onload = () => {
+// Single onload handler: initialise audio and choisir un poème en toute sécurité
+window.addEventListener('load', () => {
+  // initialiser la référence à l'audio (s'il existe)
+  music = document.getElementById("bgMusic");
+
+  // choisir la musique de page si l'élément audio existe
+  const pageKey = document.body.getAttribute("data-page") || "main";
+  if (music && pageMusic[pageKey]) {
+    music.src = pageMusic[pageKey];
+  } else if (!music) {
+    console.warn('Element #bgMusic introuvable — la lecture audio est désactivée.');
+  }
+
+  // sélection sûre du poème
   const poemElement = document.getElementById("randomPoem");
   if (poemElement) {
-    const pageKey = document.body.getAttribute("data-page") || "page1";
     const pagePoems = poems[pageKey];
-    const randomIndex = Math.floor(Math.random() * pagePoems.length);
-    poemElement.innerText = pagePoems[randomIndex];
+    if (pagePoems && Array.isArray(pagePoems) && pagePoems.length > 0) {
+      const randomIndex = Math.floor(Math.random() * pagePoems.length);
+      poemElement.innerText = pagePoems[randomIndex];
+    } else {
+      console.warn(`Aucun poème trouvé pour data-page="${pageKey}"`);
+      poemElement.innerText = "Bienvenue — aucun poème disponible pour cette page.";
+    }
   }
-};
+});
 
 // تأثير المفرقعات (Fireworks) عند الضغط
 document.addEventListener('click', (e) => {
@@ -159,3 +164,47 @@ document.addEventListener('click', (e) => {
     animation.onfinish = () => particle.remove();
   }
 });
+
+// مصفوفة الموسيقى لكل صفحة
+const pageMusic = {
+  page1: "love_music.mp3",
+  page2: "sad_music.mp3",
+  page3: "hope_music.mp3",
+  main: "Love.mp3"
+};
+
+// وظيفة التلاشي للداخل (Fade-in)
+function fadeInMusic(audioElement) {
+  if (!audioElement) return;
+  try {
+    audioElement.volume = 0; // البدء بصوت صامت
+    const p = audioElement.play();
+    if (p && typeof p.catch === 'function') p.catch(() => console.log('play() blocked, waiting for gesture'));
+  } catch (e) {
+    console.warn('Impossible de lancer la lecture:', e);
+  }
+
+  let vol = 0;
+  const interval = setInterval(() => {
+    if (vol < 0.5) { // augmenter progressivement jusqu'à 50%
+      vol = Math.min(0.5, vol + 0.05);
+      audioElement.volume = vol;
+    } else {
+      clearInterval(interval);
+    }
+  }, 200);
+}
+
+// تشغيل الموسيقى بتأثير التلاشي عند أول ضغطة (si l'audio existe)
+document.addEventListener("click", () => {
+  if (music && music.paused) {
+    fadeInMusic(music);
+  }
+}, { once: false });
+
+// تشغيل الموسيقى بتأثير التلاشي عند أول ضغطة
+document.addEventListener("click", () => {
+  if (music.paused) {
+    fadeInMusic(music);
+  }
+}, { once: false });
