@@ -179,6 +179,8 @@ const pageMusic = {
 // وظيفة التلاشي للداخل (Fade-in)
 function fadeInMusic(audioElement) {
   if (!audioElement) return;
+  // demander aux autres onglets de mettre la musique en pause
+  try { broadcastPause(); } catch (e) { /* broadcast not yet defined early, safe to ignore */ }
   try {
     audioElement.volume = 0;
     const p = audioElement.play();
@@ -196,6 +198,46 @@ function fadeInMusic(audioElement) {
       clearInterval(interval);
     }
   }, 200);
+}
+
+// ---------- Coordination cross-onglets pour la musique ----------
+// Utilise BroadcastChannel quand disponible, sinon fallback vers localStorage events
+const musicChannel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('love-music') : null;
+
+function handleRemoteMessage(msg) {
+  if (!msg || !msg.type) return;
+  if (msg.type === 'pause') {
+    try {
+      if (music && !music.paused) {
+        music.pause();
+      }
+    } catch (e) { /* ignore */ }
+  }
+}
+
+if (musicChannel) {
+  musicChannel.onmessage = (ev) => {
+    handleRemoteMessage(ev.data);
+  };
+} else {
+  // fallback: écoute les événements storage (cross-tab)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'love-music' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        handleRemoteMessage(data);
+      } catch (err) { /* ignore invalid JSON */ }
+    }
+  });
+}
+
+function broadcastPause() {
+  const payload = { type: 'pause', ts: Date.now() };
+  if (musicChannel) {
+    try { musicChannel.postMessage(payload); } catch (e) { /* ignore */ }
+  } else {
+    try { localStorage.setItem('love-music', JSON.stringify(payload)); } catch (e) { /* ignore */ }
+  }
 }
 
 // تشغيل الموسيقى بتأثير التلاشي عند أول ضغطة (si l'audio existe)
