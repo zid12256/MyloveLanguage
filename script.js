@@ -600,7 +600,20 @@ function createSnowFlake() {
 }
 
 // spawn snow more often when snow-only is enabled
-setInterval(createSnowFlake, SNOW_ONLY ? 160 : 800);
+function startSnow() {
+  // throttle during busy times; use requestIdleCallback when available
+  const spawn = () => setInterval(createSnowFlake, SNOW_ONLY ? 160 : 800);
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => { spawn(); });
+  } else {
+    // start after a short delay to let initial paint finish
+    setTimeout(() => { spawn(); }, 600);
+  }
+}
+
+// start snow after load so we don't block initial rendering
+if (document.readyState === 'complete') startSnow();
+else window.addEventListener('load', startSnow);
 
 // 1. وظيفة إنشاء النجوم التي تومض ممرة مرة
 function createTwinklingStars() {
@@ -675,4 +688,94 @@ if (playPauseBtn && playPauseIcon) {
     music.onpause = () => { playPauseIcon.innerText = '▶️'; };
     music.onended = () => { playPauseIcon.innerText = '▶️'; };
   }
+}
+
+// Keyboard shortcuts: 'b' => toggle play/pause, 'm' => toggle mute
+document.addEventListener('keydown', (e) => {
+  try {
+    if (!e || e.defaultPrevented) return;
+    // ignore when user is typing in an input, textarea or contentEditable
+    const active = document.activeElement;
+    const tag = active && active.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (active && active.isContentEditable)) return;
+
+    const key = (e.key || '').toLowerCase();
+    if (key === 'b') {
+      // toggle playback
+      if (!music) return;
+      if (music.paused) {
+        try { broadcastPause(); } catch (err) {}
+        fadeInMusic(music);
+      } else {
+        try { music.pause(); } catch (err) {}
+        try { if (typeof music._fadeInterval !== 'undefined') { clearInterval(music._fadeInterval); delete music._fadeInterval; } } catch(e){}
+        try { broadcastPause(); } catch (err) {}
+      }
+    } else if (key === 'm') {
+      // toggle mute
+      if (!music) return;
+      music.muted = !music.muted;
+      const icon = document.getElementById('muteIcon');
+      if (icon) icon.innerText = music.muted ? '🔈' : '🔊';
+      try { localStorage.setItem('love-music-muted', JSON.stringify({ muted: music.muted, ts: Date.now() })); } catch (err) {}
+      try { broadcastSetMuted(music.muted); } catch (err) {}
+    }
+  } catch (err) { /* swallow unexpected errors in global handler */ }
+});
+function accumulateSnow() {
+    const pile = document.getElementById('snowPile');
+    const rahul = document.getElementById('rahul');
+    
+    if (pile && snowHeight < maxPileHeight) {
+        snowHeight += 0.05; 
+        pile.style.height = snowHeight + 'px';
+        
+        // إذا وصل الثلج لـ 10 بكسل، يظهر راهول
+        if (snowHeight > 10 && !rahul.classList.contains('rahul-visible')) {
+            rahul.classList.add('rahul-visible');
+        }
+    }
+}
+
+// إضافة حركة مضحكة لراهول عند الضغط عليه
+document.getElementById('rahul').addEventListener('click', function() {
+    this.style.transform = 'scale(1.2) rotate(15deg)';
+    setTimeout(() => {
+        this.style.transform = 'scale(1) rotate(0deg)';
+    }, 300);
+});
+// قائمة الرسائل المخصصة لكل صفحة
+const rahulMessages = [
+    "زيدان كيبغيك كثر من أي حاجة في الدنيا 💙",
+    "عمرك تفقدي الأمل، غدا ديما كيكون أحسن ✨",
+    "انتي هي النجمة اللي منورة سما زيدان 🌟",
+    "كوني قوية، راه الحب ديالنا كيعطينا القوة 😍",
+    "زيدان ديما جنبك، فكل خطوة وفكل لحظة 🤝",
+    "الضحكة ديالك هي اللي كتخلي هاد السيت يلمع 💎"
+];
+
+function spawnRahulArmy() {
+    const container = document.body;
+    
+    // نختار 3 أو 4 رجال ثلج فقط في كل صفحة لكي لا يثقل الموقع
+    const selectedMessages = rahulMessages.sort(() => 0.5 - Math.random()).slice(0, 4);
+
+    selectedMessages.forEach((msg, index) => {
+        const rahul = document.createElement('div');
+        rahul.className = 'rahul-snowman';
+        rahul.innerHTML = `
+            <div class="message-bubble">${msg}</div>
+            ☃️
+        `;
+        
+        // توزيع عشوائي متباعد
+        rahul.style.left = (15 + (index * 20)) + '%'; 
+        
+        // ظهور تدريجي
+        setTimeout(() => {
+            rahul.classList.add('rahul-visible');
+        }, index * 800);
+
+        container.appendChild(rahul);
+    });
 }

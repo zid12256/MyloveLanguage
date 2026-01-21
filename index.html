@@ -12,7 +12,7 @@
 <div class="star-container"></div>
   <div class="container">
     <div class="card">
-        <img src="lover.jpeg" alt="Flower" class="flower-icon">
+  <img src="lover.jpeg" alt="Flower" class="flower-icon" loading="lazy">
         
         <h1>مرحبًا يا أميرتي 💙</h1>
         <p>كيف حال قلبكِ اليوم؟ اختاري لترفي عن نفسكِ 💫</p>
@@ -29,7 +29,7 @@
     <p>لقد مر على حبنا:</p>
     <div id="timer">جاري الحساب...</div>
   </div>
-  <audio id="bgMusic" loop>
+  <audio id="bgMusic" loop preload="none">
     <source src="Love.mp3" type="audio/mp3">
   </audio>
   <!-- <button id="muteBtn" class="mute-button">
@@ -44,7 +44,10 @@
     </button>
 </div>
   <h2 id="dynamicGreeting"></h2>
-  <script src="script.js"></script>
-
+  <script src="script.js" defer></script>
+<div id="rahul" class="rahul-snowman">
+    <div class="message-bubble">زيدان ديما جنبك، فكل خطوة وفكل لحظة 🤝</div>
+    ☃️
+</div>
 </body>
 </html>

@@ -7,10 +7,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="page2">
+   <div id="snowPile" class="snow-pile"></div>
   <div class="star-container"></div>
   <div class="container">
     <div class="card">
-      <img src="lover.jpeg" alt="Flower" class="flower-icon">
+  <img src="lover.jpeg" alt="Flower" class="flower-icon" loading="lazy">
       <h1>إلى أميرتي 💙</h1>
       
       <div id="randomPoem" class="poem-text" style="font-family: 'Amiri', serif; font-size: 1.3rem; line-height: 2; margin: 20px 0;">
@@ -28,9 +29,14 @@
         <span id="muteIcon">🔊</span>
     </button>
 </div>
-  <audio id="bgMusic" loop>
+  <audio id="bgMusic" loop preload="none">
     <source src="page2.mp3" type="audio/mp3">
   </audio>
-  <script src="script.js"></script>
+  <h2 id="dynamicGreeting"></h2>
+  <div id="rahul" class="rahul-snowman">
+    <div class="message-bubble">الضحكة ديالك هي اللي كتخلي هاد السيت يلمع 💎</div>
+    ☃️
+</div>
+  <script src="script.js" defer></script>
 </body>
 </html>

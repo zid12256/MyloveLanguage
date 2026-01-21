@@ -241,3 +241,62 @@ p { font-size: clamp(0.95rem, 2.8vw, 1.1rem); margin-bottom: 20px; opacity: 0.95
     background: rgba(168, 216, 255, 0.3);
     transform: scale(1.1);
 }
+.rahul-snowman {
+    position: fixed;
+    bottom: -100px; /* مخفي تحت الثلج في البداية */
+    left: 80px;
+    font-size: 60px;
+    z-index: 10;
+    transition: bottom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    filter: drop-shadow(0 0 10px white);
+}
+
+.message-bubble {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    width: 150px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* ظهور الفقرة عند مرور الفأرة */
+.rahul-snowman:hover .message-bubble {
+    opacity: 1;
+}
+
+.rahul-visible {
+    bottom: 20px; /* يرتفع ليجلس فوق الثلج المتراكم */
+}
+.rahul-snowman {
+    /* ... التنسيق السابق ... */
+    filter: drop-shadow(0 0 15px rgba(168, 216, 255, 0.8)); /* توهج أزرق فاتح */
+}
+
+.message-bubble {
+    /* ... التنسيق السابق ... */
+    border: 2px solid #a8d8ff;
+    font-weight: bold;
+    color: #0056b3;
+}
+.rahul-snowman {
+    /* ... التنسيق السابق ... */
+    filter: drop-shadow(0 0 15px rgba(168, 216, 255, 0.8)); /* توهج أزرق فاتح */
+}
+
+.message-bubble {
+    /* ... التنسيق السابق ... */
+    border: 2px solid #a8d8ff;
+    font-weight: bold;
+    color: #0056b3;
+}
