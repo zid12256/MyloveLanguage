@@ -186,9 +186,9 @@ document.addEventListener('click', (e) => {
 
 // مصفوفة الموسيقى لكل صفحة
 const pageMusic = {
-  page1: "Abdulrahman Mohammed & Khalid Barzanji - Resemblance.mp3",
-  page2: "همت-عبدالرحمن محمد وخالد برزنجي_abdulrahman mohammed&khalid barzanji-adoration [7ho1WFn79e0].mp3",
-  page3: "Abdulrahman Mohammed & Mohab Omer - Craziness - أصابك عشق (1).mp3",
+  page1: "page1.mp3",
+  page2: "page2.mp3",
+  page3: "page3.mp3",
   main: "Love.mp3"
 };
 
