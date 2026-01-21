@@ -141,6 +141,20 @@ window.addEventListener('load', () => {
       poemElement.innerText = "Bienvenue — aucun poème disponible pour cette page.";
     }
   }
+
+  // initialize audio controls UI now that `music` is available
+  try {
+    const muteIcon = document.getElementById('muteIcon');
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    if (music && muteIcon) muteIcon.innerText = music.muted ? '🔈' : '🔊';
+    if (music && playPauseIcon) playPauseIcon.innerText = (music.paused || music.ended) ? '▶️' : '⏸️';
+    if (music) {
+      music.onplay = () => { if (playPauseIcon) playPauseIcon.innerText = '⏸️'; };
+      music.onpause = () => { if (playPauseIcon) playPauseIcon.innerText = '▶️'; };
+      music.onended = () => { if (playPauseIcon) playPauseIcon.innerText = '▶️'; };
+    }
+  } catch (e) { /* ignore init errors */ }
 });
 
 // تأثير المفرقعات (Fireworks) عند الضغط — protège l'absence de document.body
@@ -206,12 +220,17 @@ function fadeInMusic(audioElement) {
   }
 
   let vol = 0;
-  const interval = setInterval(() => {
+  // store interval on the element so it can be cleared if we pause/stop
+  if (typeof audioElement._fadeInterval !== 'undefined') {
+    try { clearInterval(audioElement._fadeInterval); } catch (e) {}
+  }
+  audioElement._fadeInterval = setInterval(() => {
     if (vol < 0.5) {
       vol = Math.min(0.5, vol + 0.05);
       audioElement.volume = vol;
     } else {
-      clearInterval(interval);
+      try { clearInterval(audioElement._fadeInterval); } catch (e) {}
+      delete audioElement._fadeInterval;
     }
   }, 200);
 }
@@ -226,8 +245,13 @@ function handleRemoteMessage(msg) {
     try {
       if (music && !music.paused) {
         music.pause();
+        try { if (typeof music._fadeInterval !== 'undefined') { clearInterval(music._fadeInterval); delete music._fadeInterval; } } catch(e){}
+  // keep currentTime so pause can resume instead of restarting
       }
     } catch (e) { /* ignore */ }
+    // update play/pause UI in this tab if present
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    if (playPauseIcon) playPauseIcon.innerText = '▶️';
   } else if (msg.type === 'set-muted') {
     try {
       const muted = !!msg.muted;
@@ -273,7 +297,13 @@ function broadcastSetMuted(muted) {
 }
 
 // تشغيل الموسيقى بتأثير التلاشي عند أول ضغطة (si l'audio existe)
-document.addEventListener("click", () => {
+// only start music on general page clicks — ignore clicks on the control buttons
+document.addEventListener("click", (e) => {
+  try {
+    if (e && e.target && e.target.closest && e.target.closest('.controls-container')) return;
+    if (e && e.target && e.target.closest && e.target.closest('.control-btn')) return;
+  } catch (err) { /* ignore */ }
+
   if (music && music.paused) {
     fadeInMusic(music);
   }
@@ -466,6 +496,7 @@ if (muteBtn && muteIcon) {
     try { broadcastSetMuted(newMuted); } catch (e) { /* ignore */ }
   });
 }
+
 document.addEventListener('mousemove', (e) => {
   if (SNOW_ONLY) return; // disable heart effect in snow-only mode
   if (Math.random() > 0.9) { // يظهر القلب بنسبة بسيطة لكي لا يزدحم الموقع
@@ -570,3 +601,78 @@ function createSnowFlake() {
 
 // spawn snow more often when snow-only is enabled
 setInterval(createSnowFlake, SNOW_ONLY ? 160 : 800);
+
+// 1. وظيفة إنشاء النجوم التي تومض ممرة مرة
+function createTwinklingStars() {
+    const container = document.body;
+    for (let i = 0; i < 40; i++) {
+        const star = document.createElement('div');
+        star.className = 'twinkle-star';
+        
+        // حجم عشوائي صغير
+        const size = Math.random() * 3 + 'px';
+        star.style.width = size;
+        star.style.height = size;
+        
+        // موقع عشوائي
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.left = Math.random() * 100 + 'vw';
+        
+        // توقيت وميض مختلف لكل نجمة
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        container.appendChild(star);
+    }
+}
+
+// 2. وظيفة إنشاء شهاب واحد يمر بسرعة
+function launchShootingStar() {
+    const star = document.createElement('div');
+    star.className = 'shooting-star';
+    
+    // يبدأ من جهة اليمين أو الوسط العلوي
+    star.style.top = Math.random() * 40 + 'vh';
+    star.style.left = (Math.random() * 50 + 50) + 'vw';
+    
+    document.body.appendChild(star);
+    
+    // مسح الشهاب بعد انتهاء الحركة
+    setTimeout(() => {
+        star.remove();
+    }, 3000);
+}
+
+// تشغيل النجوم عند التحميل وإطلاق شهاب كل 6 ثوانٍ
+createTwinklingStars();
+setInterval(launchShootingStar, 3000);
+const playPauseBtn = document.getElementById("playPauseBtn");
+const playPauseIcon = document.getElementById("playPauseIcon");
+
+if (playPauseBtn && playPauseIcon) {
+  // reflect initial state when music reference becomes available
+  if (music) playPauseIcon.innerText = (music.paused || music.ended) ? '▶️' : '⏸️';
+
+  playPauseBtn.addEventListener("click", () => {
+    if (!music) return;
+    if (music.paused) {
+      // ask other tabs to pause then fade in this audio
+      try { broadcastPause(); } catch (e) {}
+      fadeInMusic(music);
+      playPauseIcon.innerText = "⏸️";
+    } else {
+      try { music.pause(); } catch(e){}
+      try { if (typeof music._fadeInterval !== 'undefined') { clearInterval(music._fadeInterval); delete music._fadeInterval; } } catch(e){}
+  // keep currentTime so pause can resume instead of restarting
+      playPauseIcon.innerText = "▶️";
+      try { broadcastPause(); } catch (e) {}
+    }
+  });
+
+  // update icon when playback state changes
+  if (music) {
+    music.onplay = () => { playPauseIcon.innerText = '⏸️'; };
+    music.onpause = () => { playPauseIcon.innerText = '▶️'; };
+    music.onended = () => { playPauseIcon.innerText = '▶️'; };
+  }
+}
