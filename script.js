@@ -1,5 +1,7 @@
 // Déclaration de la variable audio (initialisée au chargement)
 let music = null;
+// si vous voulez 'just the snow', mettez true. Cela désactive autres effets visuels.
+const SNOW_ONLY = true;
 
 const poems = {
   page1: [ // أشعر بالحب 💙 (35+ قصيدة)
@@ -113,6 +115,19 @@ window.addEventListener('load', () => {
     console.warn('Element #bgMusic introuvable — la lecture audio est désactivée.');
   }
 
+  // restaurer l'état muet partagé (si présent)
+  try {
+    const stored = localStorage.getItem('love-music-muted');
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data && typeof data.muted !== 'undefined' && music) {
+        music.muted = !!data.muted;
+        const icon = document.getElementById('muteIcon');
+        if (icon) icon.innerText = music.muted ? '🔈' : '🔊';
+      }
+    }
+  } catch (e) { /* ignore */ }
+
   // choisir un poème de manière sûre
   const poemElement = document.getElementById("randomPoem");
   if (poemElement) {
@@ -130,6 +145,7 @@ window.addEventListener('load', () => {
 
 // تأثير المفرقعات (Fireworks) عند الضغط — protège l'absence de document.body
 document.addEventListener('click', (e) => {
+  if (SNOW_ONLY) return; // disable other click effects when snow-only mode active
   // si l'événement n'a pas de coordonnées (rare), on skip
   if (!e || typeof e.clientX !== 'number') return;
 
@@ -212,6 +228,13 @@ function handleRemoteMessage(msg) {
         music.pause();
       }
     } catch (e) { /* ignore */ }
+  } else if (msg.type === 'set-muted') {
+    try {
+      const muted = !!msg.muted;
+      if (music) music.muted = muted;
+      const icon = document.getElementById('muteIcon');
+      if (icon) icon.innerText = muted ? '🔈' : '🔊';
+    } catch (e) { /* ignore */ }
   }
 }
 
@@ -237,6 +260,15 @@ function broadcastPause() {
     try { musicChannel.postMessage(payload); } catch (e) { /* ignore */ }
   } else {
     try { localStorage.setItem('love-music', JSON.stringify(payload)); } catch (e) { /* ignore */ }
+  }
+}
+
+function broadcastSetMuted(muted) {
+  const payload = { type: 'set-muted', muted: !!muted, ts: Date.now() };
+  if (musicChannel) {
+    try { musicChannel.postMessage(payload); } catch (e) { /* ignore */ }
+  } else {
+    try { localStorage.setItem('love-music-muted', JSON.stringify(payload)); } catch (e) { /* ignore */ }
   }
 }
 
@@ -324,8 +356,10 @@ window.addEventListener('load', () => {
   }, duration * 1000);
 }
 
-// إطلاق شهاب جديد كل 4 ثوانٍ
-setInterval(createShootingStar, 2000);
+// إطلاق شهاب جديد كل 4 ثوانٍ (désactivé en mode snow-only)
+if (!SNOW_ONLY) {
+  setInterval(createShootingStar, 2000);
+}
 // تاريخ بداية علاقتكما (سنة، شهر -1، يوم، ساعة، دقيقة)
 // ملاحظة: الشهور تبدأ من 0 (يناير = 0، فبراير = 1...)
 // تاريخ البداية: 20 ديسمبر 2025
@@ -350,6 +384,7 @@ setInterval(updateTimer, 1000);
 updateTimer(); // تشغيل فوري عند التحميل
 // تأثير المفرقعات الملونة حسب الصفحة
 document.addEventListener('click', (e) => {
+  if (SNOW_ONLY) return; // disable colored particles when snow-only
   const pageKey = document.body.getAttribute("data-page") || "main";
   
   // تحديد لوحة الألوان حسب الصفحة
@@ -394,3 +429,144 @@ document.addEventListener('click', (e) => {
     animation.onfinish = () => particle.remove();
   }
 });
+function createTwinklingStars() {
+  const body = document.body;
+  for (let i = 0; i < 50; i++) {
+    const star = document.createElement('div');
+    star.className = 'twinkle';
+    const size = Math.random() * 3 + 'px';
+    star.style.width = size;
+    star.style.height = size;
+    star.style.top = Math.random() * 100 + 'vh';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.animationDelay = Math.random() * 2 + 's';
+    body.appendChild(star);
+  }
+}
+if (!SNOW_ONLY) createTwinklingStars(); // تشغيل عند تحميل الصفحة (désactivé en mode snow-only)
+const timerClickEl = document.getElementById("timer");
+if (timerClickEl) {
+  timerClickEl.addEventListener("click", () => {
+    alert("كل ثانية معاك هي حياة جديدة.. شكراً حيت كاينا في حياتي 💙");
+  });
+}
+
+const muteBtn = document.getElementById("muteBtn");
+const muteIcon = document.getElementById("muteIcon");
+if (muteBtn && muteIcon) {
+  // initial icon reflect (in case music was set earlier)
+  if (music) muteIcon.innerText = music.muted ? '🔈' : '🔊';
+  muteBtn.addEventListener("click", () => {
+    if (!music) return;
+    const newMuted = !music.muted;
+    music.muted = newMuted;
+    muteIcon.innerText = newMuted ? '🔈' : '🔊';
+    // persist and broadcast the new muted state
+    try { localStorage.setItem('love-music-muted', JSON.stringify({ muted: newMuted, ts: Date.now() })); } catch (e) { /* ignore */ }
+    try { broadcastSetMuted(newMuted); } catch (e) { /* ignore */ }
+  });
+}
+document.addEventListener('mousemove', (e) => {
+  if (SNOW_ONLY) return; // disable heart effect in snow-only mode
+  if (Math.random() > 0.9) { // يظهر القلب بنسبة بسيطة لكي لا يزدحم الموقع
+        const heart = document.createElement('div');
+        heart.innerHTML = '❤️';
+        heart.style.position = 'fixed';
+        heart.style.left = e.clientX + 'px';
+        heart.style.top = e.clientY + 'px';
+        heart.style.fontSize = '10px';
+        heart.style.pointerEvents = 'none';
+        heart.style.opacity = '0.7';
+        heart.style.zIndex = '999';
+        
+        document.body.appendChild(heart);
+        
+        heart.animate([
+            { transform: 'translateY(0) scale(1)', opacity: 0.7 },
+            { transform: 'translateY(-50px) scale(0)', opacity: 0 }
+        ], { duration: 1000 });
+        
+        setTimeout(() => heart.remove(), 1000);
+    }
+});
+const timerDiv = document.getElementById("timer");
+if (timerDiv) {
+    timerDiv.style.cursor = "pointer";
+    timerDiv.addEventListener("click", () => {
+        const messages = ["أنتِ أجمل صدفة", "حبك كيكبر كل ثانية", "معاك الوقت كيدوز زوين"];
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        alert(randomMsg);
+    });
+}
+function setDynamicGreeting() {
+    const hours = new Date().getHours();
+    const greetingElement = document.getElementById("dynamicGreeting");
+    if (!greetingElement) return;
+
+    if (hours >= 5 && hours < 12) {
+        greetingElement.innerText = "صباح الخير يا أجمل ما في يومي ☀️";
+    } else if (hours >= 12 && hours < 18) {
+        greetingElement.innerText = "مساء النور.. كيداز نهارك؟ ✨";
+    } else {
+        greetingElement.innerText = "تصبحي على خير وأحلام سعيدة بحالك 🌙";
+    }
+}
+setDynamicGreeting();
+
+// voice note (flower) — safe hookup
+const voiceNote = new Audio('your-voice.mp3'); // ارفع ملف صوتك بهذا الاسم
+const flowerIcon = document.querySelector('.flower-icon');
+if (flowerIcon) {
+  flowerIcon.addEventListener('click', () => {
+    // If snow-only mode is enabled, don't play the voice note
+    if (typeof SNOW_ONLY !== 'undefined' && SNOW_ONLY) return;
+
+    // Attempt to play the voice note (ignore promise rejection from autoplay policies)
+    voiceNote.play().catch(() => {});
+
+    // تقليل صوت الموسيقى الخلفية مؤقتاً
+    if (typeof music !== 'undefined' && music) music.volume = 0.1;
+    voiceNote.onended = () => { if (typeof music !== 'undefined' && music) music.volume = 0.5; };
+  });
+}
+
+let snowHeight = 0;
+const maxPileHeight = 30; // أقصى ارتفاع للثلج لكي لا يغطي المحتوى
+
+function accumulateSnow() {
+    const pile = document.getElementById('snowPile');
+    if (pile && snowHeight < maxPileHeight) {
+        // increase by a small, visible step
+        snowHeight = Math.min(maxPileHeight, +(snowHeight + 0.25).toFixed(2));
+        pile.style.height = snowHeight + 'px';
+    }
+}
+
+// create snowflake implementation
+function createSnowFlake() {
+    const flake = document.createElement('div');
+    flake.className = 'snow-flake';
+
+    const size = 2 + Math.random() * 8; // px
+    flake.style.width = size + 'px';
+    flake.style.height = size + 'px';
+    flake.style.left = (Math.random() * 100) + 'vw';
+    flake.style.top = '-12px';
+    flake.style.opacity = (0.6 + Math.random() * 0.4).toString();
+    flake.style.pointerEvents = 'none';
+    flake.style.zIndex = '4';
+
+    const duration = 6 + Math.random() * 8; // seconds
+    flake.style.animationDuration = duration + 's';
+    flake.style.animationDelay = (Math.random() * 2) + 's';
+
+    document.body.appendChild(flake);
+
+    flake.addEventListener('animationend', () => {
+        accumulateSnow();
+        flake.remove();
+    });
+}
+
+// spawn snow more often when snow-only is enabled
+setInterval(createSnowFlake, SNOW_ONLY ? 160 : 800);

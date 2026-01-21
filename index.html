@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>إلى حبيبتي 💙</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="https://img.icons8.com/emoji/48/blue-heart.png" type="image/png">
 </head>
 <body data-page="main">
-
+<div id="snowPile" class="snow-pile"></div>
 <div class="star-container"></div>
   <div class="container">
     <div class="card">
@@ -23,6 +24,7 @@
         </div>
     </div>
   </div>
+  
   <div class="love-timer">
     <p>لقد مر على حبنا:</p>
     <div id="timer">جاري الحساب...</div>
@@ -30,6 +32,10 @@
   <audio id="bgMusic" loop>
     <source src="Love.mp3" type="audio/mp3">
   </audio>
+  <button id="muteBtn" class="mute-button">
+    <span id="muteIcon">🔊</span>
+  </button>
+  <h2 id="dynamicGreeting"></h2>
   <script src="script.js"></script>
 
 </body>
